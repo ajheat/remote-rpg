@@ -1,0 +1,14 @@
+html,
+body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+#canvasDiv {
+  height: 97%;
+  width: 97%;
+  margin-top: 5px;
+  margin-left: 5px;
+}
