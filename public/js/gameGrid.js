@@ -2,17 +2,35 @@ function init() {
 	var canvas = document.getElementById('gridCanvas');
 	var ctx = canvas.getContext('2d');
 	var containerDiv = document.getElementById('canvasDiv');
-	var tokenGrid = new TokenGrid(15, 15);
-	tokenGrid.addToken(new Token(1, 1, '#990099', 'circle'));
-	tokenGrid.addToken(new Token(14, 13, '#009900', 'square'));
+
+	var tokenGrid = new TokenGrid(1, 1);
 	var gridView = new GridCanvas(canvas, 40, tokenGrid, containerDiv);
-	
+
 	var resizeListener = function(e) {
 		gridView.resize();
 	}
-	
 	window.addEventListener('resize', resizeListener, false);
 	window.addEventListener('orientationChange', resizeListener, false);
+		
+	var postData = {'id': 'single-grid'};
+	$.post("/gridstate", postData, function(data) {
+		var tokenString = data.tokens;
+		var rows = data.rows;
+		var cols = data.cols;
+		
+		tokenGrid.resetDimensions(rows, cols, false);
+		tokenGrid.setTokens(tokenString);
+		
+		gridView.resize();
+		
+	}).fail(function(jqXHR, textStatus, errorThrown) {
+		var tokenString = '[{"x":0,"y":0,"color":"#990099","type":"circle"},{"x":1,"y":1,"color":"#009900","type":"square"}]';
+		
+		tokenGrid.resetDimensions(15, 15, false);
+		tokenGrid.setTokens(tokenString);
+		
+		gridView.resize();
+	});
 }
 
 function Token(x, y, color, type) {
@@ -23,17 +41,38 @@ function Token(x, y, color, type) {
 }
 
 function TokenGrid(rows, cols) {
-  this.rows = rows;
-  this.cols = cols;
+  this.resetDimensions(rows, cols, false);
+}
 
+TokenGrid.prototype.clear = function() {
   this.tokens = [];
-
+  
   this.gridContents = [];
   for (var i = 0; i < this.cols; i++) {
     this.gridContents[i] = [];
     for (var j = 0; j < this.rows; j++) {
       this.gridContents[i].push(null);
     }
+  }
+}
+
+TokenGrid.prototype.resetDimensions = function(rows, cols, postDims) {
+  this.rows = rows;
+  this.cols = cols;
+
+  this.clear();
+  if (postDims) {
+	this.postDimensions();
+  }
+}
+
+TokenGrid.prototype.setTokens = function(tokenString) {
+	this.clear();
+	
+	this.tokens = JSON.parse(tokenString);
+	for (var idx = 0; idx < this.tokens.length; idx++) {
+	  var token = this.tokens[idx];
+	  this.gridContents[token.x][token.y] = token;
   }
 }
 
@@ -52,16 +91,24 @@ TokenGrid.prototype.moveTokenTo = function(token, x, y) {
 	token.x = x;
 	token.y = y;
 	this.gridContents[x][y] = token;
+	this.postTokens();
   }
+}
+
+TokenGrid.prototype.postTokens = function() {
+	var postData = {'id': 'single-grid', 'tokenString': JSON.stringify(this.tokens)};
+	$.post("/tokenchange", postData);
+}
+
+TokenGrid.prototype.postDimensions = function() {
+	var postData = {'id': 'single-grid', 'rows': this.rows, 'columns': this.cols};
+	$.post("/dimensionschange", postData);
 }
 
 function GridCanvas(canvas, cellSize, tokenGrid, container) {
   this.canvas = canvas;
   this.tGrid = tokenGrid;
   this.container = container;
-
-  this.rows = this.tGrid.rows;
-  this.cols = this.tGrid.cols;
 
   this.cellSize = cellSize;
   this.tokenOffset = cellSize / 10;
@@ -236,7 +283,7 @@ GridCanvas.prototype.fitToSpace = function() {
   this.height = this.canvas.height;
   this.width = this.canvas.width;
   var viewWidth = this.width - (this.width % this.cellSize) - (this.fixedOffset * 2);
-  var totalWidth = this.cellSize * this.cols;
+  var totalWidth = this.cellSize * this.tGrid.cols;
   if (totalWidth < viewWidth) {
     this.viewWidth = totalWidth;
     this.maxXOffset = 0;
@@ -247,7 +294,7 @@ GridCanvas.prototype.fitToSpace = function() {
   this.validateXOffset();
   
   var viewHeight = this.height - (this.height % this.cellSize) - (this.fixedOffset * 2);
-  var totalHeight = this.cellSize * this.rows;
+  var totalHeight = this.cellSize * this.tGrid.rows;
   if (totalHeight < viewHeight) {
     this.viewHeight = totalHeight;
     this.maxYOffset = 0;
