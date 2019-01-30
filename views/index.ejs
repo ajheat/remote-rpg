@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+	<title>Remote RPG</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+	<script type="text/javascript" src="<%= js_path + "/gameGrid.js" %>"></script>
+	<script src="<%= static_path + "/jquery/jquery-1.11.3.min.js" %>"></script>
+	
+	
+	<!-- Bootstrap core CSS -->
+    <link href="<%= static_path + "/bootstrap/css/theme/" + theme + "/bootstrap.css" %>" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="<%= static_path + "/bootstrap/css/jumbotron-narrow.css" %>" rel="stylesheet">
+	<link href="<%= css_path + "/styles-min.css" %>" rel="stylesheet" type="text/css"/>
+	
+	<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+	<link rel="icon" href="favicon.ico" type="image/x-icon">
+  </head>
+  <body onLoad='init()'>
+    <div id="canvasDiv">
+      <canvas id="gridCanvas"></canvas>
+    </div>
+  </body>
+
+</html>
